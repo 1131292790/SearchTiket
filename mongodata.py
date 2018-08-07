@@ -1,5 +1,5 @@
 import pymongo
-class connect():
+class Connect():
 
     #服务器地址 端口 数据库名 集合名
     def __init__(self,host,port,database,coll_name):
@@ -12,10 +12,13 @@ class connect():
         db = client[self.database]
         collection = db[self.coll_name]
         return collection
+    #写入数据
     def Write_Data(self,data,collection):
         result = collection.insert_one(data)
         print(result.inserted_id)
-    def Read_Data(self,condition,collection):
-        result = collection.find_one(condition)
-        print(result)
+    #读取数据
+    def Read_Data(self,collection,condition):
+        result = collection.find(condition)
+        for i in result:
+            print(i)
 

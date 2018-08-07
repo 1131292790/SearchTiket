@@ -3,9 +3,10 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-from mongodata import connect
+from mongodata import Connect
 import threading
 tpool=[]
+#获取中国所有机场三位码
 def get_china_page(page):
     rq = requests.get('http://airport.anseo.cn/c-china__page- %s' %(str(page)))
     rq.encoding = 'utf-8'
@@ -14,25 +15,29 @@ def get_china_page(page):
     trs = soup.tbody.find_all('tr')
     pattern = re.compile('^<td>.*?>(.*?)<br/>', re.S)
     for tr in trs:
+        #每个tr下四个td
         tds = tr.find_all('td')
-        text = trs[0].find_all('td')[0]
-        result = re.findall(pattern, str(text))
-        city_name = result[0].strip()
+        #通过正则找中文城市名字
+        result = re.findall(pattern, str(tds[0]))
+        city_zh = result[0].strip()
+        #找拼音和三位码
         city_en = tds[0].a['title']
         IATA_CODE = tds[2].span.text
-        if IATA_CODE:
+        if IATA_CODE and city_en and city_zh:
             data = {
-                '城市拼音':city_en,
-                '城市名':city_name,
-                '三位码':IATA_CODE
+                'city_en':city_en,
+                'city_zh':city_zh,
+                'IATA_CODE':IATA_CODE
             }
-            conn = connect('localhost', 27017, 'airline', 'airlines')
+            #连接数据库写入数据
+            conn = Connect('localhost', 27017, 'airline', 'airlines')
             collection = conn.connet_to_Database()
             conn.Write_Data(data,collection)
-for i in range(10):
-    tpool.append(threading.Thread(target=get_china_page,args=(i,)))
-for i in tpool:
-    i.start()
-for i in tpool:
-    i.join()
-
+#创建多个线程加入列表 逐个开启并等待其他线程结束
+page = 5
+for i in range(page+1):
+    t = threading.Thread(target=get_china_page,args=(i,))
+    tpool.append(t)
+if __name__ == '__main__':
+    for i in tpool:
+        i.start()
