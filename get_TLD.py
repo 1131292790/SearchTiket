@@ -1,5 +1,6 @@
 #coding=utf-8
 #version 1.0 国内机票查询
+import queue
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -35,9 +36,16 @@ def get_china_page(page):
             conn.Write_Data(data,collection)
 #创建多个线程加入列表 逐个开启并等待其他线程结束
 page = 5
-for i in range(page+1):
-    t = threading.Thread(target=get_china_page,args=(i,))
-    tpool.append(t)
 if __name__ == '__main__':
+    for i in range(page + 1):
+        t = threading.Thread(target=get_china_page, args=(i,))
+        tpool.append(t)
     for i in tpool:
         i.start()
+    for i in tpool:
+        i.join()
+
+
+
+
+
